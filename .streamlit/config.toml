@@ -1,7 +1,7 @@
 [theme]
-base = "light"  # Keep as "light" or "dark"
-backgroundColor = "#ffffff"
-primaryColor = "#7e29cd" 
-secondaryBackgroundColor = "#ffffff"  # ← Change this to control background
+base = "light"
+primaryColor = "#7e29cd"
+backgroundColor = "#f5f6f7"  # Matches your screenshot's light grey
+secondaryBackgroundColor = "#ffffff"  # White for containers
 textColor = "#31333f"
 font = "sans serif"
