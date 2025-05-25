@@ -3,44 +3,35 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-# --- Streamlit page config ---
-st.set_page_config(page_title="PromptWall – AI Wallpaper", page_icon="🖼️")
+# --- Page Setup ---
+st.set_page_config(page_title="AI Wallpaper Generator", layout="centered")
+st.title("🖼️ Prompt-based AI Wallpaper Generator")
 
-st.title("🎨 PromptWall")
-st.caption("Generate a beautiful wallpaper from your prompt using AI")
+# --- Prompt Input ---
+prompt = st.text_input("Enter your wallpaper prompt:", placeholder="e.g. Sunset over a calm lake")
 
-# --- Prompt input ---
-prompt = st.text_input("Enter your wallpaper prompt", placeholder="e.g., A futuristic city skyline at sunset")
-
-# --- Hugging Face API setup (uses a public free model) ---
-API_URL = "https://api-inference.huggingface.co/models/prompthero/openjourney"
+# --- Hugging Face API ---
+API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2"
 headers = {"Authorization": f"Bearer {st.secrets['hf_token']}"}
 
-# --- Image generation function ---
 def generate_image(prompt):
-    payload = {"inputs": prompt}
-    response = requests.post(API_URL, headers=headers, json=payload)
-    
-    if response.status_code == 200 and "image" in response.headers.get("content-type", ""):
-        return Image.open(BytesIO(response.content))
-    else:
-        return None
+    response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+    return response.content
 
-# --- Generate button ---
-if st.button("✨ Create Wallpaper"):
-    if not prompt.strip():
+# --- Generate Button ---
+if st.button("✨ Generate Wallpaper"):
+    if not prompt:
         st.warning("Please enter a prompt.")
     else:
-        with st.spinner("Generating your wallpaper..."):
-            image = generate_image(prompt)
-            if image:
-                st.image(image, caption="🖼️ Your AI Wallpaper", use_container_width=True)
-                buf = BytesIO()
-                image.save(buf, format="PNG")
-                st.download_button("📥 Download", buf.getvalue(), "wallpaper.png")
-            else:
-                st.error("Failed to generate image. Try again with a simpler prompt or check your API token.")
+        with st.spinner("Generating..."):
+            try:
+                image_data = generate_image(prompt)
+                image = Image.open(BytesIO(image_data))
+                st.image(image, caption="Your AI Wallpaper", use_container_width=True)
+                st.download_button("📥 Download", image_data, file_name="wallpaper.png")
+            except Exception as e:
+                st.error("❌ Failed to generate image. Try a simpler prompt or check your Hugging Face token.")
 
 # --- Footer ---
 st.markdown("---")
-st.markdown("Made with ❤️ using Hugging Face + Streamlit")
+st.caption("Made with ❤️ using Streamlit + Hugging Face")
