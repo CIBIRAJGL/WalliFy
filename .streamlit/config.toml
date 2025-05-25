@@ -1,6 +1,7 @@
 [theme]
 base = "light"  # Keep as "light" or "dark"
-backgroundColor = "#f0f2f6"  # ← Change this to control background
+backgroundColor = "#ffffff"
 primaryColor = "#7e29cd" 
+secondaryBackgroundColor = "#ffffff"  # ← Change this to control background
 textColor = "#31333f"
 font = "sans serif"
