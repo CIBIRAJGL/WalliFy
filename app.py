@@ -2,18 +2,18 @@ import streamlit as st
 import requests
 import re
 
-# Page config
+# -------------------- Page Configuration --------------------
 st.set_page_config(page_title="PromptWall – AI Wallpaper Generator", page_icon="🖼️", layout="centered")
 
 st.title("🖼️ PromptWall")
 st.caption("Create stunning wallpapers using AI (Stable Diffusion)")
 
-# Prompt input
+# -------------------- Prompt Input --------------------
 prompt = st.text_input("🎨 Enter a prompt for your wallpaper:", placeholder="e.g., A dreamlike forest in the morning fog")
 
-st.markdown("### Select or enter custom resolution")
+# -------------------- Resolution Selection --------------------
+st.markdown("### Select or enter a custom resolution")
 
-# Supported resolutions
 supported_resolutions = [
     "256x256",
     "384x384",
@@ -25,41 +25,57 @@ supported_resolutions = [
     "Custom"
 ]
 
-resolution_option = st.selectbox(
-    "🖼️ Select resolution:",
-    options=supported_resolutions,
-    index=2
-)
+selected_option = st.selectbox("🖼️ Select resolution:", supported_resolutions, index=6)
 
 custom_resolution = ""
-if resolution_option == "Custom":
-    # Add some vertical spacing before custom input
-    st.write("")  # empty line for spacing
-    custom_resolution = st.text_input("Enter custom resolution (WIDTHxHEIGHT), e.g., 1280x704")
+if selected_option == "Custom":
+    custom_resolution = st.text_input("Enter custom resolution (WIDTHxHEIGHT)", placeholder="e.g., 1280x704")
 
-def valid_resolution(res):
+def is_valid_resolution(res):
     match = re.match(r"^(\d+)x(\d+)$", res.strip())
     if not match:
         return False
     width, height = int(match.group(1)), int(match.group(2))
     return width % 64 == 0 and height % 64 == 0
 
-if resolution_option == "Custom":
-    if custom_resolution == "":
-        resolution = None
-        st.info("Please enter a custom resolution (both width and height must be multiples of 64).")
-    elif not valid_resolution(custom_resolution):
-        resolution = None
-        st.error("Invalid format or values! Width and height must be multiples of 64, e.g., 1280x704.")
-    else:
+# Final resolution to use
+if selected_option == "Custom":
+    if is_valid_resolution(custom_resolution):
         resolution = custom_resolution.strip()
+        st.success(f"Using custom resolution: {resolution}")
+    else:
+        resolution = None
+        if custom_resolution != "":
+            st.error("Invalid resolution. Width and height must be multiples of 64 (e.g., 1280x704).")
 else:
-    resolution = resolution_option
+    resolution = selected_option
 
-# The rest of your app...
+# -------------------- Hugging Face API Settings --------------------
+API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2"
+headers = {"Authorization": f"Bearer {st.secrets['hf_token']}"}
 
-# For demonstration, show chosen resolution
-if resolution:
-    st.markdown(f"**Selected resolution:** {resolution}")
+def query_huggingface(prompt):
+    payload = {"inputs": prompt}
+    response = requests.post(API_URL, headers=headers, json=payload)
+    return response.content
 
-# [Your existing API call and image generation code here]
+# -------------------- Generate Button --------------------
+st.write("")  # spacing
+
+if st.button("✨ Generate Wallpaper"):
+    if not prompt:
+        st.warning("Please enter a prompt first.")
+    elif not resolution:
+        st.warning("Please select or enter a valid resolution.")
+    else:
+        with st.spinner("Generating your wallpaper..."):
+            try:
+                image_bytes = query_huggingface(prompt)
+                st.image(image_bytes, caption=f"🖼️ Wallpaper ({resolution})", use_column_width=True)
+                st.download_button("📥 Download Image", image_bytes, file_name="wallpaper.png")
+            except Exception as e:
+                st.error(f"⚠️ Error generating image: {e}")
+
+# -------------------- Footer --------------------
+st.markdown("---")
+st.markdown("Created by **CibirajGL** | Powered by 🤗 Hugging Face + Streamlit")
