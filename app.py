@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import re
+from PIL import Image
+from io import BytesIO
 
 # -------------------- Page Configuration --------------------
 st.set_page_config(page_title="PromptWall – AI Wallpaper Generator", page_icon="🖼️", layout="centered")
@@ -22,6 +24,8 @@ supported_resolutions = [
     "768x512",
     "768x768",
     "1024x1024",
+    "1024x1792",
+    "1792x1024",
     "Custom"
 ]
 
@@ -57,6 +61,10 @@ headers = {"Authorization": f"Bearer {st.secrets['hf_token']}"}
 def query_huggingface(prompt):
     payload = {"inputs": prompt}
     response = requests.post(API_URL, headers=headers, json=payload)
+    
+    if response.status_code != 200 or "image" not in response.headers.get("content-type", ""):
+        raise Exception(f"API Error: {response.status_code} - {response.text}")
+    
     return response.content
 
 # -------------------- Generate Button --------------------
@@ -71,7 +79,8 @@ if st.button("✨ Generate Wallpaper"):
         with st.spinner("Generating your wallpaper..."):
             try:
                 image_bytes = query_huggingface(prompt)
-                st.image(image_bytes, caption=f"🖼️ Wallpaper ({resolution})", use_column_width=True)
+                image = Image.open(BytesIO(image_bytes))
+                st.image(image, caption=f"🖼️ Wallpaper ({resolution})", use_container_width=True)
                 st.download_button("📥 Download Image", image_bytes, file_name="wallpaper.png")
             except Exception as e:
                 st.error(f"⚠️ Error generating image: {e}")
