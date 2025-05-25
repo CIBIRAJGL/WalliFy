@@ -2,15 +2,32 @@ import streamlit as st
 import requests
 import time
 
-# Configuration
-API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+# Theme enforcement
+def set_theme():
+    theme = {
+        "base": "light",
+        "primaryColor": "#7e29cd",
+        "backgroundColor": "#f0f0f0",  # Your custom background
+        "secondaryBackgroundColor": "#ffffff",
+        "textColor": "#31333f"
+    }
+    st.markdown(f"""<style>
+        :root {{
+            --primary-color: {theme['primaryColor']};
+            --background-color: {theme['backgroundColor']};
+            --secondary-background-color: {theme['secondaryBackgroundColor']};
+            --text-color: {theme['textColor']};
+        }}
+        .stApp {{
+            background-color: var(--background-color);
+        }}
+    </style>""", unsafe_allow_html=True)
 
-# Setup page
-st.set_page_config(
-    page_title="AI Wallpaper Studio",
-    page_icon="🎨",
-    layout="centered"
-)
+set_theme()
+
+# Rest of your existing code below...
+# [Keep all your previous UI and logic components]
+
 
 # Check for API key
 if 'HF_API_KEY' not in st.secrets:
